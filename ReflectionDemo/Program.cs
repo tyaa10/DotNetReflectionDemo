@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -50,11 +51,11 @@ namespace ReflectionDemo
                 Console.WriteLine(getSurprize());
             }*/
 
-            var result = getSurprize();
-            Type resultType = result.GetType();
+            //var result = getSurprize();
+            //Type resultType = result.GetType();
             //Console.WriteLine(resultType);
 
-            foreach (var field in resultType.GetFields())
+            /*foreach (var field in resultType.GetFields())
             {
                 Console.WriteLine(field.GetValue(result));
             }
@@ -62,14 +63,61 @@ namespace ReflectionDemo
             foreach (var prop in resultType.GetProperties())
             {
                 Console.WriteLine(prop.Name + " = " + prop.GetValue(result));
+            }*/
+
+            /*foreach (var field in resultType.GetFields())
+            {
+                Console.WriteLine(field.Name + " " + field.GetValue(result));
             }
+
+            foreach (var prop in resultType.GetProperties())
+            {
+                var propValue = prop.GetValue(result);
+                var propType = propValue.GetType();
+                if (propType.IsPrimitive || propValue is string)
+                    //Console.WriteLine($"{prop.Name} = {propValue}");
+                    Console.WriteLine(String.Format("{0} = {1}", prop.Name, propValue));
+                else
+                {
+                    Console.WriteLine($"{prop.Name} = ");
+                    foreach (var field in propType.GetFields())
+                    {
+                        var value = propType.GetField(field.Name).GetValue(propValue);
+                        Console.WriteLine($"\t{field.Name} = {value}");
+                    }
+                }
+            }*/
+
+            PrivateCustomerEntity pce = new PrivateCustomerEntity();
+            Type resultType = pce.GetType();
+
+            foreach (var field in resultType.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance))
+            {
+                if (field.IsPrivate)
+                {
+                    if (field.Name == "secureField")
+                    {
+                        field.SetValue(pce, "World!");
+                    }
+                }
+                
+            }
+
+            foreach (var field in resultType.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance))
+            {
+                Console.WriteLine(field.Name + " " + field.GetValue(pce));
+            }
+
+            resultType.GetMethod("MyMethod").Invoke(pce, null);
+            resultType.GetMethod("MyMethod2").Invoke(pce, new object[] { "x", "y" });
+            resultType.GetMethod("MyMethod3").Invoke(pce, new object[] { 12 });
         }
 
         private static dynamic getSurprize() {
 
             dynamic result = null;
             Random random = new Random();
-            int variant = random.Next(0,3);
+            int variant = random.Next(1,4);
             switch (variant)
             {
                 case 1:
